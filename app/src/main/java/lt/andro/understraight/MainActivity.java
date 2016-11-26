@@ -103,7 +103,8 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
         showProgress(true);
 
         //        final String MW_MAC_ADDRESS = "E2:87:11:D8:23:9D"; // MW1
-        final String MW_MAC_ADDRESS = "FB:89:1F:FE:16:D4"; // MW2
+        //        final String MW_MAC_ADDRESS = "FB:89:1F:FE:16:D4"; // MW2
+        final String MW_MAC_ADDRESS = "D0:92:E2:8C:30:BA"; // MW3
 
         final BluetoothManager btManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
         final BluetoothDevice remoteDevice = btManager.getAdapter().getRemoteDevice(MW_MAC_ADDRESS);
