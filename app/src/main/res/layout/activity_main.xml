@@ -14,9 +14,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Current reading from bend sensor"
-        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         />
 
@@ -24,6 +22,19 @@
         android:id="@+id/main_value"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:text="Not yet available"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/main_message"
+        />
+
+    <Switch
+        android:id="@+id/main_read_continuously"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:checked="true"
+        android:text="@string/read_continuously"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/main_value"
         />
 
     <ProgressBar
@@ -35,5 +46,11 @@
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         />
+
+
+    <com.robinhood.spark.SparkView
+        android:id="@+id/main_plot_sparkView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
 
 </android.support.constraint.ConstraintLayout>

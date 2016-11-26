@@ -7,47 +7,57 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Looper;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.widget.ProgressBar;
+import android.widget.Switch;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.mbientlab.metawear.AsyncOperation;
+import com.mbientlab.metawear.Message;
 import com.mbientlab.metawear.MetaWearBleService;
 import com.mbientlab.metawear.MetaWearBoard;
+import com.mbientlab.metawear.RouteManager;
+import com.mbientlab.metawear.UnsupportedModuleException;
 import com.mbientlab.metawear.module.Gpio;
 
-import butterknife.BindView;
+import java.util.Locale;
 
-import static android.view.View.GONE;
+import butterknife.BindView;
+import butterknife.ButterKnife;
+
 import static android.view.View.VISIBLE;
 
 public class MainActivity extends AppCompatActivity implements ServiceConnection {
+    public static final int DELAY_READS_MILLIS = 100;
     final byte PIN_BEND_SENSOR = 0;
-
-    private MetaWearBoard mwBoard;
-
     @BindView(R.id.main_connection_progress)
-    private ProgressBar progressBar;
+    ProgressBar progressBar;
+    @BindView(R.id.main_value)
+    TextView value;
+    @BindView(R.id.main_read_continuously)
+    Switch readContinuously;
+
+    MetaWearBoard mwBoard;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        View.OnClickListener turnOn = new PullSocket(this, Gpio.PullMode.PULL_UP);
-        View.OnClickListener turnOff = new PullSocket(this, Gpio.PullMode.PULL_DOWN);
+        ButterKnife.bind(this);
 
-//        buttonOn.setOnClickListener(turnOn);
-//        buttonOff.setOnClickListener(turnOff);
+        readContinuously.setOnCheckedChangeListener((compoundButton, b) -> continuousReadValue());
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        ///< Unbind the service when the activity is hidden
         getApplicationContext().unbindService(this);
     }
 
@@ -56,21 +66,16 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
         super.onResume();
 
         progressBar.setVisibility(VISIBLE);
-//        buttonOff.setVisibility(GONE);
-//        buttonOn.setVisibility(GONE);
 
-        ///< Bind the service when the activity is shown
         getApplicationContext().bindService(new Intent(this, MetaWearBleService.class),
                 this, Context.BIND_AUTO_CREATE);
     }
 
     @Override
     public void onServiceConnected(ComponentName name, IBinder service) {
-        ///< Typecast the binder to the service's LocalBinder class
         MetaWearBleService.LocalBinder serviceBinder = (MetaWearBleService.LocalBinder) service;
 
-        //final String MW_MAC_ADDRESS= "D0:92:E2:8C:30:BA";
-        final String MW_MAC_ADDRESS = "D5:CD:CA:4B:66:23";
+        final String MW_MAC_ADDRESS = "E2:87:11:D8:23:9D";
 
         final BluetoothManager btManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
         final BluetoothDevice remoteDevice = btManager.getAdapter().getRemoteDevice(MW_MAC_ADDRESS);
@@ -88,23 +93,8 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
                 Log.i("test", "Connected");
                 Log.i("test", "MetaBoot? " + mwBoard.inMetaBootMode());
 
-                mwBoard.readDeviceInformation().onComplete(new AsyncOperation.CompletionHandler<MetaWearBoard.DeviceInformation>() {
-                    @Override
-                    public void success(MetaWearBoard.DeviceInformation result) {
-                        Log.i("test", "Device Information: " + result.toString());
-                        progressBar.setVisibility(GONE);
-
-//                        buttonOn.setVisibility(VISIBLE);
-//                        buttonOff.setVisibility(VISIBLE);
-                    }
-
-                    @Override
-                    public void failure(Throwable error) {
-                        String msg = "Error reading device information: " + error.getLocalizedMessage();
-                        Log.e("test", msg, error);
-                        Toast.makeText(MainActivity.this, msg, Toast.LENGTH_SHORT).show();
-                    }
-                });
+                showProgress(false);
+                continuousReadValue();
             }
 
             @Override
@@ -121,6 +111,62 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
         });
 
         mwBoard.connect();
+    }
+
+    private void continuousReadValue() {
+        Handler handler = new Handler(Looper.getMainLooper());
+
+        readValue();
+
+        if (readContinuously.isChecked())
+            handler.postDelayed(this::continuousReadValue, DELAY_READS_MILLIS);
+    }
+
+    private void readValue() {
+        final Gpio gpioModule;
+        try {
+            gpioModule = mwBoard.getModule(Gpio.class);
+            if (gpioModule == null) {
+                Log.i("MainActivity", "Can't read. gpioModule is null");
+                return;
+            }
+            gpioModule.routeData().fromAnalogIn(PIN_BEND_SENSOR, Gpio.AnalogReadMode.ADC).stream("gpio_0_adc_stream")
+                    .commit().onComplete(new AsyncOperation.CompletionHandler<RouteManager>() {
+                @Override
+                public void success(RouteManager result) {
+                    result.subscribe("gpio_0_adc_stream", new RouteManager.MessageHandler() {
+                        @Override
+                        public void process(Message msg) {
+                            showValue(msg);
+                        }
+                    });
+
+                    gpioModule.readAnalogIn(PIN_BEND_SENSOR, Gpio.AnalogReadMode.ADC);
+                }
+            });
+        } catch (UnsupportedModuleException e) {
+            e.printStackTrace();
+            Toast.makeText(MainActivity.this, e.getLocalizedMessage(), Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void showValue(Message msg) {
+        Short readValue = msg.getData(Short.class);
+        String valueString = String.format(Locale.getDefault(), "gpio 0 ADC: %d, %s", readValue, createDotsString(readValue));
+        Log.i("MainActivity", valueString);
+        value.setText(valueString);
+    }
+
+    private String createDotsString(Short readValue) {
+        String dots = ".";
+        for (int i = 1; i < readValue; i++) {
+            dots += ".";
+        }
+        return dots;
+    }
+
+    private void showProgress(boolean visible) {
+        progressBar.setVisibility(visible ? VISIBLE : View.GONE);
     }
 
     @Override
