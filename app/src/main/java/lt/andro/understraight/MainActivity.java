@@ -51,6 +51,8 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
     MetaWearBoard mwBoard;
     private BendValuesAdapter adapter;
 
+    private boolean isRunning = false;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -69,15 +71,21 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
     @Override
     protected void onPause() {
         super.onPause();
+        isRunning = false;
         getApplicationContext().unbindService(this);
     }
 
     @Override
     protected void onResume() {
         super.onResume();
+        isRunning = true;
 
         progressBar.setVisibility(VISIBLE);
 
+        bindService();
+    }
+
+    private void bindService() {
         getApplicationContext().bindService(new Intent(this, MetaWearBleService.class),
                 this, Context.BIND_AUTO_CREATE);
     }
@@ -86,24 +94,33 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
     public void onServiceConnected(ComponentName name, IBinder service) {
         MetaWearBleService.LocalBinder serviceBinder = (MetaWearBleService.LocalBinder) service;
 
-//        final String MW_MAC_ADDRESS = "E2:87:11:D8:23:9D"; // MW1
+        connectToUnderStraight(serviceBinder);
+    }
+
+    private void connectToUnderStraight(MetaWearBleService.LocalBinder serviceBinder) {
+
+        if (!isRunning) return;
+        showProgress(true);
+
+        //        final String MW_MAC_ADDRESS = "E2:87:11:D8:23:9D"; // MW1
         final String MW_MAC_ADDRESS = "FB:89:1F:FE:16:D4"; // MW2
 
         final BluetoothManager btManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
         final BluetoothDevice remoteDevice = btManager.getAdapter().getRemoteDevice(MW_MAC_ADDRESS);
+        Toast.makeText(this, "Connecting to Bluetooth with MAC: " + MW_MAC_ADDRESS, Toast.LENGTH_SHORT).show();
 
         serviceBinder.executeOnUiThread();
 
-        Log.i("test", "Service connected");
+        Log.i("MainActivity", "Service connected");
 
         mwBoard = serviceBinder.getMetaWearBoard(remoteDevice);
         mwBoard.setConnectionStateHandler(new MetaWearBoard.ConnectionStateHandler() {
             @Override
             public void connected() {
-                Toast.makeText(MainActivity.this, "Connected", Toast.LENGTH_LONG).show();
+                Toast.makeText(MainActivity.this, "Connected to UnderStraight", Toast.LENGTH_LONG).show();
 
-                Log.i("test", "Connected");
-                Log.i("test", "MetaBoot? " + mwBoard.inMetaBootMode());
+                Log.i("MainActivity", "MW Connected");
+                Log.i("MainActivity", "MW MetaBoot? " + mwBoard.inMetaBootMode());
 
                 showProgress(false);
                 continuousReadValue();
@@ -112,13 +129,19 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
             @Override
             public void disconnected() {
                 Toast.makeText(MainActivity.this, "Disconnected", Toast.LENGTH_LONG).show();
-                Log.i("test", "Disconnected");
+                Log.i("MainActivity", "MW Disconnected");
+
+                // Reconnect
+                connectToUnderStraight(serviceBinder);
             }
 
             @Override
             public void failure(int status, final Throwable error) {
                 Toast.makeText(MainActivity.this, error.getLocalizedMessage(), Toast.LENGTH_LONG).show();
-                Log.e("test", "Error connecting", error);
+                Log.e("MainActivity", "Error connecting", error);
+
+                // Reconnect
+                connectToUnderStraight(serviceBinder);
             }
         });
 
@@ -183,5 +206,9 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
 
     @Override
     public void onServiceDisconnected(ComponentName componentName) {
+        Toast.makeText(this, "Service disconnected", Toast.LENGTH_SHORT).show();
+        if (isRunning) {
+            bindService();
+        }
     }
 }
