@@ -37,6 +37,7 @@ import static android.view.View.VISIBLE;
 
 public class MainActivity extends AppCompatActivity implements ServiceConnection {
     public static final int DELAY_READS_MILLIS = 300;
+    public static final int DELAY_RECONNECTION_MILLIS = 2000;
     public static final String GPIO_0_ADC_STREAM = "gpio_0_adc_stream";
     final byte PIN_BEND_SENSOR = 0;
     @BindView(R.id.main_connection_progress)
@@ -52,6 +53,7 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
     private BendValuesAdapter adapter;
 
     private boolean isRunning = false;
+    private Handler handler;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -73,12 +75,14 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
         super.onPause();
         isRunning = false;
         getApplicationContext().unbindService(this);
+        handler = null;
     }
 
     @Override
     protected void onResume() {
         super.onResume();
         isRunning = true;
+        handler = new Handler(Looper.getMainLooper());
 
         progressBar.setVisibility(VISIBLE);
 
@@ -86,6 +90,9 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
     }
 
     private void bindService() {
+        if (!isRunning) return;
+
+        showProgress(true);
         getApplicationContext().bindService(new Intent(this, MetaWearBleService.class),
                 this, Context.BIND_AUTO_CREATE);
     }
@@ -103,8 +110,8 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
         showProgress(true);
 
         //        final String MW_MAC_ADDRESS = "E2:87:11:D8:23:9D"; // MW1
-        //        final String MW_MAC_ADDRESS = "FB:89:1F:FE:16:D4"; // MW2
-        final String MW_MAC_ADDRESS = "D0:92:E2:8C:30:BA"; // MW3
+        final String MW_MAC_ADDRESS = "FB:89:1F:FE:16:D4"; // MW2
+//        final String MW_MAC_ADDRESS = "D0:92:E2:8C:30:BA"; // MW3
 
         final BluetoothManager btManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
         final BluetoothDevice remoteDevice = btManager.getAdapter().getRemoteDevice(MW_MAC_ADDRESS);
@@ -124,16 +131,14 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
                 Log.i("MainActivity", "MW MetaBoot? " + mwBoard.inMetaBootMode());
 
                 showProgress(false);
-                continuousReadValue();
+                initGpioRouteStream();
             }
 
             @Override
             public void disconnected() {
                 Toast.makeText(MainActivity.this, "Disconnected", Toast.LENGTH_LONG).show();
                 Log.i("MainActivity", "MW Disconnected");
-
-                // Reconnect
-                connectToUnderStraight(serviceBinder);
+                reconnectToUnderStraight(serviceBinder);
             }
 
             @Override
@@ -142,26 +147,41 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
                 Log.e("MainActivity", "Error connecting", error);
 
                 // Reconnect
-                connectToUnderStraight(serviceBinder);
+                reconnectToUnderStraight(serviceBinder);
             }
         });
 
         mwBoard.connect();
     }
 
-    private void continuousReadValue() {
-        Handler handler = new Handler(Looper.getMainLooper());
+    private void reconnectToUnderStraight(MetaWearBleService.LocalBinder serviceBinder) {
+        showProgress(false);
+        handler.postDelayed(() -> {
+            // Reconnect
+            connectToUnderStraight(serviceBinder);
+        }, DELAY_RECONNECTION_MILLIS);
+    }
 
+    private void continuousReadValue() {
         readValue();
 
-        if (readContinuously.isChecked())
+        if (readContinuously.isChecked() && isRunning)
             handler.postDelayed(this::continuousReadValue, DELAY_READS_MILLIS);
     }
 
     private void readValue() {
-        final Gpio gpioModule;
         try {
-            gpioModule = mwBoard.getModule(Gpio.class);
+            final Gpio gpioModule = mwBoard.getModule(Gpio.class);
+            gpioModule.readAnalogIn(PIN_BEND_SENSOR, Gpio.AnalogReadMode.ADC);
+        } catch (UnsupportedModuleException e) {
+            e.printStackTrace();
+            Toast.makeText(MainActivity.this, "Error reading value: " + e.getLocalizedMessage(), Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void initGpioRouteStream() {
+        try {
+            final Gpio gpioModule = mwBoard.getModule(Gpio.class);
             if (gpioModule == null) {
                 Log.i("MainActivity", "Can't read. gpioModule is null");
                 return;
@@ -170,15 +190,15 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
                     .commit().onComplete(new AsyncOperation.CompletionHandler<RouteManager>() {
                 @Override
                 public void success(RouteManager result) {
+                    Toast.makeText(MainActivity.this, "Successfully created ADC input route.", Toast.LENGTH_SHORT).show();
                     result.subscribe(GPIO_0_ADC_STREAM, msg -> addValue(msg));
 
-                    //TODO maybe this needs to be moved to other scope?
-                    gpioModule.readAnalogIn(PIN_BEND_SENSOR, Gpio.AnalogReadMode.ADC);
+                    continuousReadValue();
                 }
             });
         } catch (UnsupportedModuleException e) {
             e.printStackTrace();
-            Toast.makeText(MainActivity.this, e.getLocalizedMessage(), Toast.LENGTH_SHORT).show();
+            Toast.makeText(MainActivity.this, "Error initializing board: " + e.getLocalizedMessage(), Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -207,9 +227,10 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
 
     @Override
     public void onServiceDisconnected(ComponentName componentName) {
-        Toast.makeText(this, "Service disconnected", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "Service disconnected. Reconnecting.", Toast.LENGTH_SHORT).show();
         if (isRunning) {
-            bindService();
+            showProgress(false);
+            handler.postDelayed(this::bindService, DELAY_RECONNECTION_MILLIS);
         }
     }
 }
