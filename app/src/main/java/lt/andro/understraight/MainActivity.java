@@ -25,7 +25,9 @@ import com.mbientlab.metawear.MetaWearBoard;
 import com.mbientlab.metawear.RouteManager;
 import com.mbientlab.metawear.UnsupportedModuleException;
 import com.mbientlab.metawear.module.Gpio;
+import com.robinhood.spark.SparkView;
 
+import java.util.ArrayList;
 import java.util.Locale;
 
 import butterknife.BindView;
@@ -34,7 +36,8 @@ import butterknife.ButterKnife;
 import static android.view.View.VISIBLE;
 
 public class MainActivity extends AppCompatActivity implements ServiceConnection {
-    public static final int DELAY_READS_MILLIS = 100;
+    public static final int DELAY_READS_MILLIS = 300;
+    public static final String GPIO_0_ADC_STREAM = "gpio_0_adc_stream";
     final byte PIN_BEND_SENSOR = 0;
     @BindView(R.id.main_connection_progress)
     ProgressBar progressBar;
@@ -42,8 +45,11 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
     TextView value;
     @BindView(R.id.main_read_continuously)
     Switch readContinuously;
+    @BindView(R.id.main_plot_sparkView)
+    SparkView sparkViewPlotting;
 
     MetaWearBoard mwBoard;
+    private BendValuesAdapter adapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,8 +57,13 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
         setContentView(R.layout.activity_main);
 
         ButterKnife.bind(this);
-
+        initSparkPlotting();
         readContinuously.setOnCheckedChangeListener((compoundButton, b) -> continuousReadValue());
+    }
+
+    private void initSparkPlotting() {
+        adapter = new BendValuesAdapter(new ArrayList<>());
+        sparkViewPlotting.setAdapter(adapter);
     }
 
     @Override
@@ -75,7 +86,8 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
     public void onServiceConnected(ComponentName name, IBinder service) {
         MetaWearBleService.LocalBinder serviceBinder = (MetaWearBleService.LocalBinder) service;
 
-        final String MW_MAC_ADDRESS = "E2:87:11:D8:23:9D";
+//        final String MW_MAC_ADDRESS = "E2:87:11:D8:23:9D"; // MW1
+        final String MW_MAC_ADDRESS = "FB:89:1F:FE:16:D4"; // MW2
 
         final BluetoothManager btManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
         final BluetoothDevice remoteDevice = btManager.getAdapter().getRemoteDevice(MW_MAC_ADDRESS);
@@ -130,17 +142,13 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
                 Log.i("MainActivity", "Can't read. gpioModule is null");
                 return;
             }
-            gpioModule.routeData().fromAnalogIn(PIN_BEND_SENSOR, Gpio.AnalogReadMode.ADC).stream("gpio_0_adc_stream")
+            gpioModule.routeData().fromAnalogIn(PIN_BEND_SENSOR, Gpio.AnalogReadMode.ADC).stream(GPIO_0_ADC_STREAM)
                     .commit().onComplete(new AsyncOperation.CompletionHandler<RouteManager>() {
                 @Override
                 public void success(RouteManager result) {
-                    result.subscribe("gpio_0_adc_stream", new RouteManager.MessageHandler() {
-                        @Override
-                        public void process(Message msg) {
-                            showValue(msg);
-                        }
-                    });
+                    result.subscribe(GPIO_0_ADC_STREAM, msg -> addValue(msg));
 
+                    //TODO maybe this needs to be moved to other scope?
                     gpioModule.readAnalogIn(PIN_BEND_SENSOR, Gpio.AnalogReadMode.ADC);
                 }
             });
@@ -150,10 +158,14 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
         }
     }
 
-    private void showValue(Message msg) {
+    private void addValue(Message msg) {
         Short readValue = msg.getData(Short.class);
-        String valueString = String.format(Locale.getDefault(), "gpio 0 ADC: %d, %s", readValue, createDotsString(readValue));
-        Log.i("MainActivity", valueString);
+
+        adapter.addValue(readValue);
+        adapter.notifyDataSetChanged();
+
+        String valueString = String.format(Locale.getDefault(), "gpio 0 ADC: %d", readValue);
+        Log.i("MainActivity", valueString + ": " + createDotsString(readValue));
         value.setText(valueString);
     }
 

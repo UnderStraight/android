@@ -37,6 +37,16 @@
         app:layout_constraintTop_toBottomOf="@id/main_value"
         />
 
+    <com.robinhood.spark.SparkView
+        android:id="@+id/main_plot_sparkView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/main_read_continuously"
+        />
+
     <ProgressBar
         android:id="@+id/main_connection_progress"
         android:layout_width="wrap_content"
@@ -46,11 +56,4 @@
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         />
-
-
-    <com.robinhood.spark.SparkView
-        android:id="@+id/main_plot_sparkView"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent" />
-
 </android.support.constraint.ConstraintLayout>
