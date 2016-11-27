@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/activity_pre_calibrationn"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="lt.andro.understraight.PreCalibrationActivity"
+    >
+
+    <TextView
+        android:id="@+id/pre_calibration_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="64dp"
+        android:text="@string/app_name"
+        android:textColor="@color/white"
+        android:textSize="28sp"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        />
+
+    <ImageView
+        android:id="@+id/pre_calibration_img_bg_lady"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginTop="18dp"
+        android:alpha="0.5"
+        android:contentDescription="@string/pre_calibration_img_bg_lady_description"
+        android:src="@drawable/img_bg_lady"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/pre_calibration_title"
+        />
+
+    <TextView
+        android:id="@+id/pre_calibration_bt_warning"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="25dp"
+        android:drawablePadding="8dp"
+        android:drawableStart="@drawable/ic_bluetooth_pink"
+        android:text="@string/pre_calibration_bt_warning"
+        android:textColor="#bdbdbd"
+        android:textSize="13sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        />
+
+    <Button
+        android:id="@+id/pre_calibration_start_calibration"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:layout_marginBottom="26dp"
+        android:layout_marginEnd="30dp"
+        android:layout_marginStart="30dp"
+        android:backgroundTint="@color/salmon"
+        android:text="@string/pre_calibration_start_calibration"
+        app:layout_constraintBottom_toTopOf="@id/pre_calibration_bt_warning"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        tools:targetApi="lollipop"
+        />
+
+    <TextView
+        android:id="@+id/pre_calibration_stand_straight"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="56dp"
+        android:text="@string/pre_calibration_stand_straight"
+        android:textColor="#e0e0e0"
+        android:textSize="18sp"
+        app:layout_constraintBottom_toTopOf="@id/pre_calibration_start_calibration"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        />
+
+    <TextView
+        android:id="@+id/pre_calibration_ampersand"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="18dp"
+        android:text="@string/ampersand"
+        android:textColor="@color/salmon"
+        android:textSize="18sp"
+        app:layout_constraintBottom_toTopOf="@id/pre_calibration_stand_straight"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        />
+
+    <TextView
+        android:id="@+id/pre_calibration_put_your_bra"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
+        android:text="@string/pre_calibration_put_your_bra"
+        android:textColor="#e0e0e0"
+        android:textSize="18sp"
+        app:layout_constraintBottom_toTopOf="@id/pre_calibration_ampersand"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        />
+</android.support.constraint.ConstraintLayout>

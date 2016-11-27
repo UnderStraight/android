@@ -60,9 +60,15 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        startPreCalibration();
+
         ButterKnife.bind(this);
         initSparkPlotting();
         readContinuously.setOnCheckedChangeListener((compoundButton, b) -> continuousReadValue());
+    }
+
+    private void startPreCalibration() {
+        PreCalibrationActivity.startActivity(this);
     }
 
     private void initSparkPlotting() {

@@ -21,7 +21,10 @@
 
         <service android:name="com.mbientlab.metawear.MetaWearBleService"/>
 
-        <activity android:name=".PreCalibrationActivity">
+        <activity
+            android:name=".PreCalibrationActivity"
+            android:theme="@style/AppTheme.NoActionBar"
+            >
         </activity>
     </application>
 

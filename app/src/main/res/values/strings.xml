@@ -1,4 +1,10 @@
 <resources>
-    <string name="app_name">Under Straight</string>
+    <string name="app_name">UNDERSTRAIGHT</string>
     <string name="read_continuously">Read continuously</string>
+    <string name="pre_calibration_bt_warning">Make sure bluetooth is turned ON</string>
+    <string name="pre_calibration_start_calibration">START CALIBRATING</string>
+    <string name="pre_calibration_stand_straight">Stand straight so we can \n calibrate your ideal posture!</string>
+    <string name="ampersand"><![CDATA[&]]></string>
+    <string name="pre_calibration_put_your_bra">Put on your bra with strap</string>
+    <string name="pre_calibration_img_bg_lady_description">Back of a lady with a black bra.</string>
 </resources>
