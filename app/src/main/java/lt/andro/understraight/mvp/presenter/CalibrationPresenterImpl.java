@@ -29,7 +29,7 @@ import static lt.andro.understraight.utils.Constants.DELAY_RECONNECTION_MILLIS;
  */
 public class CalibrationPresenterImpl implements CalibrationPresenter {
     public static final String ACCELEROMETER_DATA_STREAM = "AccelerometerDataStream";
-    public static final int STOOP_THRESHOLD = 300;
+    public static final int STOOP_THRESHOLD = 350;
     private final CalibrationView calibrationView;
     private final BluetoothManager btManager;
     MetaWearBoard mwBoard;

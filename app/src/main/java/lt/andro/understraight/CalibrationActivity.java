@@ -10,6 +10,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.joanzapata.iconify.widget.IconTextView;
 import com.mbientlab.metawear.MetaWearBleService;
 import com.robinhood.spark.SparkView;
 
@@ -33,6 +34,8 @@ public class CalibrationActivity extends AppCompatActivity implements Calibratio
     SparkView sparkViewPlotting;
     @BindView(R.id.calibration_progress)
     ProgressBar progressBar;
+    @BindView(R.id.calibration_stoop_evaluation)
+    IconTextView stoopEvaluation;
 
     private StoopValuesAdapter adapter;
     private CalibrationPresenter presenter;
@@ -107,5 +110,10 @@ public class CalibrationActivity extends AppCompatActivity implements Calibratio
                         R.color.salmon :
                         R.color.apple_green);
         sparkViewPlotting.setLineColor(color);
+        stoopEvaluation.setText(getString(isStooping ? R.string.evaluation_bad : R.string.evaluation_good));
+        stoopEvaluation.setTextColor(color);
+        stoopValueView.setTextColor(color);
     }
+
+
 }

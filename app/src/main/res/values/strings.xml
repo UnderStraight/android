@@ -7,4 +7,6 @@
     <string name="ampersand"><![CDATA[&]]></string>
     <string name="pre_calibration_put_your_bra">Put on your bra with strap</string>
     <string name="img_bg_lady_description">Back of a lady with a black bra.</string>
+    <string name="evaluation_good">{fa-check-circle} Good</string>
+    <string name="evaluation_bad">{fa-times-circle} Bad</string>
 </resources>
