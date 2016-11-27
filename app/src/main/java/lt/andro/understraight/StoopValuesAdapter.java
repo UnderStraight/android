@@ -8,11 +8,11 @@ import java.util.ArrayList;
  * @author Vilius Kraujutis
  * @since 2016-11-26 18:10.
  */
-class BendValuesAdapter extends SparkAdapter {
+class StoopValuesAdapter extends SparkAdapter {
     public static final int MAX_LENGTH = 50;
     private final ArrayList<Short> values;
 
-    public BendValuesAdapter(ArrayList<Short> values) {
+    public StoopValuesAdapter(ArrayList<Short> values) {
         this.values = values;
     }
 

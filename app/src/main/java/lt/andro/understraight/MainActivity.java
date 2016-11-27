@@ -32,12 +32,12 @@ import java.util.Locale;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import lt.andro.understraight.utils.Constants;
 
 import static android.view.View.VISIBLE;
 
 public class MainActivity extends AppCompatActivity implements ServiceConnection {
     public static final int DELAY_READS_MILLIS = 300;
-    public static final int DELAY_RECONNECTION_MILLIS = 2000;
     public static final String GPIO_0_ADC_STREAM = "gpio_0_adc_stream";
     final byte PIN_BEND_SENSOR = 0;
     @BindView(R.id.main_connection_progress)
@@ -50,10 +50,15 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
     SparkView sparkViewPlotting;
 
     MetaWearBoard mwBoard;
-    private BendValuesAdapter adapter;
+    private StoopValuesAdapter adapter;
 
     private boolean isRunning = false;
     private Handler handler;
+
+    public static void startActivity(Context context) {
+        Intent intent = new Intent(context, MainActivity.class);
+        context.startActivity(intent);
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -63,7 +68,7 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
         startPreCalibration();
 
         ButterKnife.bind(this);
-        initSparkPlotting();
+        initStoopValuesPlotting();
         readContinuously.setOnCheckedChangeListener((compoundButton, b) -> continuousReadValue());
     }
 
@@ -71,9 +76,10 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
         PreCalibrationActivity.startActivity(this);
     }
 
-    private void initSparkPlotting() {
-        adapter = new BendValuesAdapter(new ArrayList<>());
+    private void initStoopValuesPlotting() {
+        adapter = new StoopValuesAdapter(new ArrayList<>());
         sparkViewPlotting.setAdapter(adapter);
+        sparkViewPlotting.setLineColor(getResources().getColor(R.color.colorAccent));
     }
 
     @Override
@@ -165,7 +171,7 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
         handler.postDelayed(() -> {
             // Reconnect
             connectToUnderStraight(serviceBinder);
-        }, DELAY_RECONNECTION_MILLIS);
+        }, Constants.DELAY_RECONNECTION_MILLIS);
     }
 
     private void continuousReadValue() {
@@ -242,7 +248,7 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
 
         if (isRunning) {
             showProgress(false);
-            handler.postDelayed(this::bindService, DELAY_RECONNECTION_MILLIS);
+            handler.postDelayed(this::bindService, Constants.DELAY_RECONNECTION_MILLIS);
         }
     }
 }
