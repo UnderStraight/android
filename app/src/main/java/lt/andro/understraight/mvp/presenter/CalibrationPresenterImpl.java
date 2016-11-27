@@ -7,8 +7,9 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
 import android.util.Log;
+import android.widget.Toast;
 
-import com.mbientlab.metawear.AsyncOperation;
+import com.mbientlab.metawear.AsyncOperation.CompletionHandler;
 import com.mbientlab.metawear.Message;
 import com.mbientlab.metawear.MetaWearBleService;
 import com.mbientlab.metawear.MetaWearBoard;
@@ -16,11 +17,15 @@ import com.mbientlab.metawear.RouteManager;
 import com.mbientlab.metawear.UnsupportedModuleException;
 import com.mbientlab.metawear.data.CartesianFloat;
 import com.mbientlab.metawear.data.CartesianShort;
+import com.mbientlab.metawear.module.Gpio;
 import com.mbientlab.metawear.module.Mma8452qAccelerometer;
+import com.mbientlab.metawear.module.Mma8452qAccelerometer.Orientation;
 
+import lt.andro.understraight.MainActivity;
 import lt.andro.understraight.mvp.view.CalibrationView;
 import lt.andro.understraight.utils.Constants;
 
+import static lt.andro.understraight.utils.Constants.DELAY_READS_MILLIS;
 import static lt.andro.understraight.utils.Constants.DELAY_RECONNECTION_MILLIS;
 
 /**
@@ -92,8 +97,8 @@ public class CalibrationPresenterImpl implements CalibrationPresenter {
 
             @Override
             public void failure(int status, final Throwable error) {
-                String msg = "Error connecting: " + error.getLocalizedMessage();
-                calibrationView.showToast(msg);
+                error.printStackTrace();
+                calibrationView.showToast("Error connecting: " + error.getLocalizedMessage());
 
                 // Reconnect
                 reconnectToUnderStraight(serviceBinder);
@@ -103,23 +108,51 @@ public class CalibrationPresenterImpl implements CalibrationPresenter {
         mwBoard.connect();
     }
 
+    private void continuousReadValue() {
+        readValue();
+
+        if (isAttached)
+            handler.postDelayed(this::continuousReadValue, DELAY_READS_MILLIS);
+    }
+
+    private void readValue() {
+        try {
+            accelerometer.readAnalogIn(PIN_BEND_SENSOR, Gpio.AnalogReadMode.ADC);
+        } catch (UnsupportedModuleException e) {
+            e.printStackTrace();
+            Toast.makeText(MainActivity.this, "Error reading value: " + e.getLocalizedMessage(), Toast.LENGTH_SHORT).show();
+        }
+    }
+
     private void startAccelerometerModule() {
         try {
             accelerometer = mwBoard.getModule(Mma8452qAccelerometer.class);
-            // Enable high pass filtering with the highest cutoff freq
-            // Set the measurement range to +/-8g
-            accelerometer.configureAxisSampling().enableHighPassFilter((byte) 0)
-                    .setFullScaleRange(Mma8452qAccelerometer.FullScaleRange.FSR_8G)
-                    .commit();
-            // Set the output data rate to 100Hz
-            accelerometer.setOutputDataRate(Mma8452qAccelerometer.OutputDataRate.ODR_1_56_HZ);
+            accelerometer.enableOrientationDetection();
 
-            // enable axis sampling
-            accelerometer.enableAxisSampling();
+            accelerometer
+                    .routeData()
+                    .fromOrientation()
+                    .stream(ACCELEROMETER_DATA_STREAM)
+                    .commit()
+                    .onComplete(new CompletionHandler<RouteManager>() {
+                        @Override
+                        public void success(RouteManager result) {
+                            calibrationView.showToast("Accelerometer route success");
+                            result.subscribe(ACCELEROMETER_DATA_STREAM, msg -> showAccelerometerMessage(msg));
+                            continuousReadValue();
+                        }
 
-            continuousReadValue();
+                        @Override
+                        public void failure(Throwable error) {
+                            error.printStackTrace();
+                            calibrationView.showToast("Error committing route");
+                        }
+                    });
+//            accelerometer.setOutputDataRate(Mma8452qAccelerometer.OutputDataRate.ODR_6_25_HZ);
 
-            // Switch the accelerometer to active mode
+//            // enable axis sampling
+//            accelerometer.enableAxisSampling();
+
             accelerometer.start();
         } catch (UnsupportedModuleException e) {
             e.printStackTrace();
@@ -136,34 +169,10 @@ public class CalibrationPresenterImpl implements CalibrationPresenter {
         }, Constants.DELAY_RECONNECTION_MILLIS);
     }
 
-    private void continuousReadValue() {
-        accelerometer
-                .routeData()
-                .fromAxes()
-                .stream(ACCELEROMETER_DATA_STREAM)
-                .commit()
-                .onComplete(new AsyncOperation.CompletionHandler<RouteManager>() {
-                    @Override
-                    public void success(RouteManager result) {
-                        calibrationView.showToast("Accelerometer route success");
-                        result.subscribe(ACCELEROMETER_DATA_STREAM, message -> showAccelerometerMessage(message));
-                    }
-
-                    @Override
-                    public void failure(Throwable error) {
-                        String msg = "Error committing route";
-                        Log.e("MetaWearAccelerometer", msg, error);
-                        calibrationView.showToast(msg);
-                    }
-                });
-    }
-
     private void showAccelerometerMessage(Message msg) {
-        CartesianFloat axes = msg.getData(CartesianFloat.class);
-        Log.i("MetaWearAccelerometer", axes.toString());
-
-        final CartesianShort axisData = msg.getData(CartesianShort.class);
-        calibrationView.showValue(axisData.x());
+        Orientation data = msg.getData(Orientation.class);
+        Log.i("MainActivity", data.toString());
+        calibrationView.showValue(data.isFront().x());
     }
 
 
