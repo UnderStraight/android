@@ -6,4 +6,5 @@ package lt.andro.understraight.utils;
  */
 public class Constants {
     public static final int DELAY_RECONNECTION_MILLIS = 2000;
+    public static final int DELAY_READS_MILLIS = 300;
 }

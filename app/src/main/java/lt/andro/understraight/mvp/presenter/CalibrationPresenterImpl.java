@@ -106,18 +106,27 @@ public class CalibrationPresenterImpl implements CalibrationPresenter {
     private void startAccelerometerModule() {
         try {
             accelerometer = mwBoard.getModule(Mma8452qAccelerometer.class);
-            // Enable high pass filtering with the highest cutoff freq
-            // Set the measurement range to +/-8g
-            accelerometer.configureAxisSampling().enableHighPassFilter((byte) 0)
-                    .setFullScaleRange(Mma8452qAccelerometer.FullScaleRange.FSR_8G)
-                    .commit();
-            // Set the output data rate to 100Hz
-            accelerometer.setOutputDataRate(Mma8452qAccelerometer.OutputDataRate.ODR_1_56_HZ);
-
-            // enable axis sampling
             accelerometer.enableAxisSampling();
 
-            continuousReadValue();
+            accelerometer
+                    .routeData()
+                    .fromAxes()
+                    .stream(ACCELEROMETER_DATA_STREAM)
+                    .commit()
+                    .onComplete(new AsyncOperation.CompletionHandler<RouteManager>() {
+                        @Override
+                        public void success(RouteManager result) {
+                            calibrationView.showToast("Accelerometer route success");
+                            result.subscribe(ACCELEROMETER_DATA_STREAM, message -> showAccelerometerMessage(message));
+                        }
+
+                        @Override
+                        public void failure(Throwable error) {
+                            String msg = "Error committing route";
+                            Log.e("MetaWearAccelerometer", msg, error);
+                            calibrationView.showToast(msg);
+                        }
+                    });
 
             // Switch the accelerometer to active mode
             accelerometer.start();
@@ -136,34 +145,16 @@ public class CalibrationPresenterImpl implements CalibrationPresenter {
         }, Constants.DELAY_RECONNECTION_MILLIS);
     }
 
-    private void continuousReadValue() {
-        accelerometer
-                .routeData()
-                .fromAxes()
-                .stream(ACCELEROMETER_DATA_STREAM)
-                .commit()
-                .onComplete(new AsyncOperation.CompletionHandler<RouteManager>() {
-                    @Override
-                    public void success(RouteManager result) {
-                        calibrationView.showToast("Accelerometer route success");
-                        result.subscribe(ACCELEROMETER_DATA_STREAM, message -> showAccelerometerMessage(message));
-                    }
-
-                    @Override
-                    public void failure(Throwable error) {
-                        String msg = "Error committing route";
-                        Log.e("MetaWearAccelerometer", msg, error);
-                        calibrationView.showToast(msg);
-                    }
-                });
-    }
-
     private void showAccelerometerMessage(Message msg) {
         CartesianFloat axes = msg.getData(CartesianFloat.class);
         Log.i("MetaWearAccelerometer", axes.toString());
 
         final CartesianShort axisData = msg.getData(CartesianShort.class);
-        calibrationView.showValue(axisData.x());
+
+
+        //// AXIS
+
+        calibrationView.showValue(axisData.z());
     }
 
 

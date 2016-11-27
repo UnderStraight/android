@@ -37,7 +37,6 @@ import lt.andro.understraight.utils.Constants;
 import static android.view.View.VISIBLE;
 
 public class MainActivity extends AppCompatActivity implements ServiceConnection {
-    public static final int DELAY_READS_MILLIS = 300;
     public static final String GPIO_0_ADC_STREAM = "gpio_0_adc_stream";
     final byte PIN_BEND_SENSOR = 0;
     @BindView(R.id.main_connection_progress)
@@ -178,7 +177,7 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
         readValue();
 
         if (readContinuously.isChecked() && isRunning)
-            handler.postDelayed(this::continuousReadValue, DELAY_READS_MILLIS);
+            handler.postDelayed(this::continuousReadValue, Constants.DELAY_READS_MILLIS);
     }
 
     private void readValue() {
