@@ -42,7 +42,7 @@ public class PreCalibrationActivity extends AppCompatActivity implements PreCali
         super.onResume();
     }
 
-    @OnClick(R.id.pre_calibration_stand_straight)
+    @OnClick(R.id.pre_calibration_start_calibration)
     void onStartCalibrationButtonClicked(View view) {
         CalibrationActivity.startActivity(this);
     }
