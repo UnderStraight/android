@@ -31,14 +31,14 @@ public class PreCalibrationActivity extends AppCompatActivity implements PreCali
         setContentView(R.layout.activity_pre_calibration);
 
         ButterKnife.bind(this);
+
+        showContentViews(false);
+        new Handler().postDelayed(() -> showContentViews(true), 2000);
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        showContentViews(false);
-
-        new Handler().postDelayed(() -> showContentViews(true), 2000);
     }
 
     @Override
