@@ -11,6 +11,7 @@ import java.util.List;
 
 import butterknife.BindViews;
 import butterknife.ButterKnife;
+import butterknife.OnClick;
 import lt.andro.understraight.mvp.view.PreCalibrationView;
 import lt.andro.understraight.utils.Utils;
 
@@ -39,6 +40,11 @@ public class PreCalibrationActivity extends AppCompatActivity implements PreCali
     @Override
     protected void onResume() {
         super.onResume();
+    }
+
+    @OnClick(R.id.pre_calibration_stand_straight)
+    void onStartCalibrationButtonClicked(View view) {
+        CalibrationActivity.startActivity(this);
     }
 
     @Override
