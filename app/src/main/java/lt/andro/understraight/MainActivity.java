@@ -171,22 +171,26 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
 
     private void readValue() {
         try {
-            final Gpio gpioModule = mwBoard.getModule(Gpio.class);
-            gpioModule.readAnalogIn(PIN_BEND_SENSOR, Gpio.AnalogReadMode.ADC);
+            getGpioModule().readAnalogIn(PIN_BEND_SENSOR, Gpio.AnalogReadMode.ADC);
         } catch (UnsupportedModuleException e) {
             e.printStackTrace();
             Toast.makeText(MainActivity.this, "Error reading value: " + e.getLocalizedMessage(), Toast.LENGTH_SHORT).show();
         }
     }
 
+    private Gpio getGpioModule() throws UnsupportedModuleException {
+        return mwBoard.getModule(Gpio.class);
+    }
+
     private void initGpioRouteStream() {
         try {
-            final Gpio gpioModule = mwBoard.getModule(Gpio.class);
-            if (gpioModule == null) {
-                Log.i("MainActivity", "Can't read. gpioModule is null");
+            if (getGpioModule() == null) {
+                String msg = "Can't read. gpioModule is null";
+                Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
+                Log.i("MainActivity", msg);
                 return;
             }
-            gpioModule.routeData().fromAnalogIn(PIN_BEND_SENSOR, Gpio.AnalogReadMode.ADC).stream(GPIO_0_ADC_STREAM)
+            getGpioModule().routeData().fromAnalogIn(PIN_BEND_SENSOR, Gpio.AnalogReadMode.ADC).stream(GPIO_0_ADC_STREAM)
                     .commit().onComplete(new AsyncOperation.CompletionHandler<RouteManager>() {
                 @Override
                 public void success(RouteManager result) {
@@ -227,7 +231,9 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
 
     @Override
     public void onServiceDisconnected(ComponentName componentName) {
-        Toast.makeText(this, "Service disconnected. Reconnecting.", Toast.LENGTH_SHORT).show();
+        String msg = "Service disconnected. Reconnecting.";
+        Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
+
         if (isRunning) {
             showProgress(false);
             handler.postDelayed(this::bindService, DELAY_RECONNECTION_MILLIS);
