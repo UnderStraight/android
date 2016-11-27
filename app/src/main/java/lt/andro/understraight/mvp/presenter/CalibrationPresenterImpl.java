@@ -29,6 +29,7 @@ import static lt.andro.understraight.utils.Constants.DELAY_RECONNECTION_MILLIS;
  */
 public class CalibrationPresenterImpl implements CalibrationPresenter {
     public static final String ACCELEROMETER_DATA_STREAM = "AccelerometerDataStream";
+    public static final int STOOP_THRESHOLD = 300;
     private final CalibrationView calibrationView;
     private final BluetoothManager btManager;
     MetaWearBoard mwBoard;
@@ -154,9 +155,13 @@ public class CalibrationPresenterImpl implements CalibrationPresenter {
 
         //// AXIS
 
-        calibrationView.showValue(axisData.z());
+        Short z = (short) (axisData.z() * (short) -1);
+        calibrationView.showValue(z, isStooping(z));
     }
 
+    private boolean isStooping(Short stoopValue) {
+        return stoopValue > STOOP_THRESHOLD;
+    }
 
     @Override
     public void onServiceDisconnected(ComponentName componentName) {

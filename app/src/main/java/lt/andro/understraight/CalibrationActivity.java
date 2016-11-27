@@ -97,11 +97,15 @@ public class CalibrationActivity extends AppCompatActivity implements Calibratio
     }
 
     @Override
-    public void showValue(Short stoopValue) {
+    public void showValue(Short stoopValue, boolean isStooping) {
         adapter.addValue(stoopValue);
         adapter.notifyDataSetChanged();
 
         stoopValueView.setText(String.format(Locale.getDefault(), "Value: %d", stoopValue));
-        sparkViewPlotting.setLineColor(getResources().getColor(R.color.apple_green));
+        int color = getResources().getColor(
+                isStooping ?
+                        R.color.salmon :
+                        R.color.apple_green);
+        sparkViewPlotting.setLineColor(color);
     }
 }
