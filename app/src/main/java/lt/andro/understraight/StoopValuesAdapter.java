@@ -10,8 +10,8 @@ import java.util.List;
  * @since 2016-11-26 18:10.
  */
 class StoopValuesAdapter extends SparkAdapter {
-    private static final int MAX_LENGTH = 500;
-    private static final int AVERAGING_LENGTH = 10;
+    private static final int MAX_LENGTH = 50;
+    private static final int AVERAGING_LENGTH = 3;
     private final ArrayList<Short> values;
     private final ArrayList<Short> averagingArray = new ArrayList<>(AVERAGING_LENGTH);
     @SuppressWarnings("FieldCanBeLocal")

@@ -16,6 +16,7 @@ import com.mbientlab.metawear.RouteManager;
 import com.mbientlab.metawear.UnsupportedModuleException;
 import com.mbientlab.metawear.data.CartesianFloat;
 import com.mbientlab.metawear.data.CartesianShort;
+import com.mbientlab.metawear.module.Gpio;
 import com.mbientlab.metawear.module.Mma8452qAccelerometer;
 
 import lt.andro.understraight.mvp.view.CalibrationView;
@@ -30,12 +31,17 @@ import static lt.andro.understraight.utils.Constants.DELAY_RECONNECTION_MILLIS;
 public class CalibrationPresenterImpl implements CalibrationPresenter {
     public static final String ACCELEROMETER_DATA_STREAM = "AccelerometerDataStream";
     public static final int STOOP_THRESHOLD = 350;
+    public static final String GPIO_0_ADC_STREAM = "gpio_0_adc_stream";
+
+    final byte GPIO_PIN= 0;
+
     private final CalibrationView calibrationView;
     private final BluetoothManager btManager;
     MetaWearBoard mwBoard;
     private boolean isAttached;
     private Handler handler;
     private Mma8452qAccelerometer accelerometer;
+    private Gpio gpioModule;
 
     public CalibrationPresenterImpl(CalibrationView calibrationView, BluetoothManager btManager) {
         this.calibrationView = calibrationView;
@@ -46,19 +52,16 @@ public class CalibrationPresenterImpl implements CalibrationPresenter {
 
     @Override
     public void onServiceConnected(ComponentName componentName, IBinder service) {
-
-
         MetaWearBleService.LocalBinder serviceBinder = (MetaWearBleService.LocalBinder) service;
 
         connectToUnderStraight(serviceBinder);
     }
 
     private void connectToUnderStraight(MetaWearBleService.LocalBinder serviceBinder) {
-
         if (!isAttached) return;
         calibrationView.showProgress(true);
 
-        //        final String MW_MAC_ADDRESS = "E2:87:11:D8:23:9D"; // MW1
+//        final String MW_MAC_ADDRESS = "E2:87:11:D8:23:9D"; // MW1
         final String MW_MAC_ADDRESS = "FB:89:1F:FE:16:D4"; // MW2
 //        final String MW_MAC_ADDRESS = "D0:92:E2:8C:30:BA"; // MW3
 
@@ -81,7 +84,7 @@ public class CalibrationPresenterImpl implements CalibrationPresenter {
                 Log.i(this.getClass().getName(), "MW MetaBoot? " + mwBoard.inMetaBootMode());
 
                 calibrationView.showProgress(false);
-                startAccelerometerModule();
+                startReadingSensorData();
             }
 
             @Override
@@ -104,36 +107,55 @@ public class CalibrationPresenterImpl implements CalibrationPresenter {
         mwBoard.connect();
     }
 
-    private void startAccelerometerModule() {
+    private void startReadingSensorData() {
         try {
-            accelerometer = mwBoard.getModule(Mma8452qAccelerometer.class);
-            accelerometer.enableAxisSampling();
 
-            accelerometer
-                    .routeData()
-                    .fromAxes()
-                    .stream(ACCELEROMETER_DATA_STREAM)
-                    .commit()
-                    .onComplete(new AsyncOperation.CompletionHandler<RouteManager>() {
+            // Route data from adc reads on pin 0
+            gpioModule = mwBoard.getModule(Gpio.class);
+            gpioModule.routeData().fromAnalogIn(GPIO_PIN, Gpio.AnalogReadMode.ADC).stream(GPIO_0_ADC_STREAM)
+                    .commit().onComplete(new AsyncOperation.CompletionHandler<RouteManager>() {
+                @Override
+                public void success(RouteManager result) {
+                    result.subscribe(GPIO_0_ADC_STREAM, new RouteManager.MessageHandler() {
                         @Override
-                        public void success(RouteManager result) {
-                            calibrationView.showToast("Accelerometer route success");
-                            result.subscribe(ACCELEROMETER_DATA_STREAM, message -> showAccelerometerMessage(message));
-                        }
-
-                        @Override
-                        public void failure(Throwable error) {
-                            String msg = "Error committing route";
-                            Log.e("MetaWearAccelerometer", msg, error);
-                            calibrationView.showToast(msg);
+                        public void process(Message msg) {
+                            calibrationView.showToast("Sensor route success");
+                            result.subscribe(ACCELEROMETER_DATA_STREAM, message -> showSensorValue(msg.getData(Short.class)));
                         }
                     });
 
-            // Switch the accelerometer to active mode
-            accelerometer.start();
+                    gpioModule.readAnalogIn(GPIO_PIN, Gpio.AnalogReadMode.ADC);
+                }
+            });
+
+//            accelerometer = mwBoard.getModule(Mma8452qAccelerometer.class);
+//            accelerometer.enableAxisSampling();
+//
+//            accelerometer
+//                    .routeData()
+//                    .fromAxes()
+//                    .stream(ACCELEROMETER_DATA_STREAM)
+//                    .commit()
+//                    .onComplete(new AsyncOperation.CompletionHandler<RouteManager>() {
+//                        @Override
+//                        public void success(RouteManager result) {
+//                            calibrationView.showToast("Accelerometer route success");
+//                            result.subscribe(ACCELEROMETER_DATA_STREAM, message -> showSensorValue(message));
+//                        }
+//
+//                        @Override
+//                        public void failure(Throwable error) {
+//                            String msg = "Error committing route";
+//                            Log.e("MetaWearAccelerometer", msg, error);
+//                            calibrationView.showToast(msg);
+//                        }
+//                    });
+//
+//            // Switch the accelerometer to active mode
+//            accelerometer.start();
         } catch (UnsupportedModuleException e) {
             e.printStackTrace();
-            calibrationView.showToast("Failed to connect to accelerometer");
+            calibrationView.showToast("Failed to connect to sensor");
         }
     }
 
@@ -146,17 +168,8 @@ public class CalibrationPresenterImpl implements CalibrationPresenter {
         }, Constants.DELAY_RECONNECTION_MILLIS);
     }
 
-    private void showAccelerometerMessage(Message msg) {
-        CartesianFloat axes = msg.getData(CartesianFloat.class);
-        Log.i("MetaWearAccelerometer", axes.toString());
-
-        final CartesianShort axisData = msg.getData(CartesianShort.class);
-
-
-        //// AXIS
-
-        Short z = (short) (axisData.z() * (short) -1);
-        calibrationView.showValue(z, isStooping(z));
+    private void showSensorValue(Short value) {
+        calibrationView.showValue(value, isStooping(value));
     }
 
     private boolean isStooping(Short stoopValue) {
