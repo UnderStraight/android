@@ -40,7 +40,7 @@ dependencies {
     })
     compile 'com.android.support:appcompat-v7:25.1.0'
     compile 'com.android.support.constraint:constraint-layout:1.0.0-beta4'
-    compile 'com.mbientlab:metawear:2.5.9'
+    compile 'com.mbientlab:metawear:2.8.6'
     compile 'com.mbientlab.bletoolbox:scanner:0.2.0'
     compile 'com.jakewharton:butterknife:8.4.0'
     compile 'com.robinhood.spark:spark:1.1.2'
