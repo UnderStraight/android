@@ -15,5 +15,5 @@ public interface CalibrationView {
 
     void showToast(String msg);
 
-    void showValue(Short stoopValue, boolean isStooping);
+    void showValue(int stoopValue, boolean isStooping);
 }

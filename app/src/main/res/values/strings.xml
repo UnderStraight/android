@@ -9,4 +9,6 @@
     <string name="img_bg_lady_description">Back of a lady with a black bra.</string>
     <string name="evaluation_good">{fa-check-circle} Good</string>
     <string name="evaluation_bad">{fa-times-circle} Bad</string>
+    <string name="main_activity_top_message">Current reading from both accelerometers</string>
+    <string name="main_activity_na">Not yet available</string>
 </resources>

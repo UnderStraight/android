@@ -37,11 +37,6 @@ public class PreCalibrationActivity extends AppCompatActivity implements PreCali
         new Handler().postDelayed(() -> showContentViews(true), 2000);
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-    }
-
     @OnClick(R.id.pre_calibration_start_calibration)
     void onStartCalibrationButtonClicked(View view) {
         CalibrationActivity.startActivity(this);
@@ -49,6 +44,7 @@ public class PreCalibrationActivity extends AppCompatActivity implements PreCali
 
     @Override
     public void showContentViews(boolean visible) {
-        ButterKnife.apply(contentViews, visible ? Utils.ACTION_VISIBLE : Utils.ACTION_GONE);
+        if (contentViews != null)
+            ButterKnife.apply(contentViews, visible ? Utils.ACTION_VISIBLE : Utils.ACTION_GONE);
     }
 }

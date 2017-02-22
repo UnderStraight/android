@@ -100,7 +100,7 @@ public class CalibrationActivity extends AppCompatActivity implements Calibratio
     }
 
     @Override
-    public void showValue(Short stoopValue, boolean isStooping) {
+    public void showValue(int stoopValue, boolean isStooping) {
         adapter.addValue(stoopValue);
         adapter.notifyDataSetChanged();
 

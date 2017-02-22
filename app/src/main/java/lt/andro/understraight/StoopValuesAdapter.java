@@ -5,28 +5,31 @@ import com.robinhood.spark.SparkAdapter;
 import java.util.ArrayList;
 import java.util.List;
 
+import hugo.weaving.DebugLog;
+
 /**
  * @author Vilius Kraujutis
  * @since 2016-11-26 18:10.
  */
 class StoopValuesAdapter extends SparkAdapter {
     private static final int MAX_LENGTH = 150;
-    private static final int AVERAGING_LENGTH = 5;
-    private final ArrayList<Short> values;
-    private final ArrayList<Short> averagingArray = new ArrayList<>(AVERAGING_LENGTH);
+    private static final int AVERAGING_LENGTH = 2;
+    private final ArrayList<Integer> values;
+    private final ArrayList<Integer> averagingArray = new ArrayList<>(AVERAGING_LENGTH);
     @SuppressWarnings("FieldCanBeLocal")
     private long averageSumTemp;
 
-    StoopValuesAdapter(ArrayList<Short> values) {
+    StoopValuesAdapter(ArrayList<Integer> values) {
         this.values = values;
     }
 
-    private short average(List<Short> numbers) {
+    @DebugLog
+    private Integer average(List<Integer> numbers) {
         averageSumTemp = 0;
-        for (Short number : numbers) {
+        for (Integer number : numbers) {
             averageSumTemp += number;
         }
-        return (short) (averageSumTemp / numbers.size());
+        return (int) (averageSumTemp / numbers.size());
     }
 
     @Override
@@ -40,7 +43,7 @@ class StoopValuesAdapter extends SparkAdapter {
     }
 
     @Override
-    public Short getItem(int index) {
+    public Integer getItem(int index) {
         return values.get(index);
     }
 
@@ -49,14 +52,14 @@ class StoopValuesAdapter extends SparkAdapter {
         return values.get(index);
     }
 
-    void addValue(Short readValue) {
+    void addValue(int readValue) {
         values.add(getAveraged(readValue));
         if (values.size() > MAX_LENGTH) {
             values.remove(0);
         }
     }
 
-    private Short getAveraged(Short readValue) {
+    private int getAveraged(int readValue) {
         averagingArray.add(readValue);
         if (averagingArray.size() > AVERAGING_LENGTH) {
             averagingArray.remove(0);

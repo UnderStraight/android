@@ -11,29 +11,33 @@
 
     <ImageView
         android:id="@+id/pre_calibration_title"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginEnd="25dp"
         android:layout_marginStart="25dp"
         android:layout_marginTop="64dp"
         android:contentDescription="@string/app_name"
         android:src="@drawable/img_app_name"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         />
 
     <ImageView
         android:id="@+id/pre_calibration_img_bg_lady"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="18dp"
         android:alpha="0.5"
         android:contentDescription="@string/img_bg_lady_description"
         android:src="@drawable/img_bg_lady"
         app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
         />
 
     <TextView
@@ -53,7 +57,7 @@
 
     <Button
         android:id="@+id/pre_calibration_start_calibration"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="56dp"
         android:layout_marginBottom="26dp"
         android:layout_marginEnd="30dp"
@@ -61,8 +65,10 @@
         android:backgroundTint="@color/salmon"
         android:text="@string/pre_calibration_start_calibration"
         app:layout_constraintBottom_toTopOf="@id/pre_calibration_bt_warning"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
         tools:targetApi="lollipop"
         />
 

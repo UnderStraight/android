@@ -11,7 +11,7 @@
 
     <ImageView
         android:id="@+id/calibration_title"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginEnd="25dp"
         android:layout_marginStart="25dp"
@@ -25,7 +25,7 @@
 
     <ImageView
         android:id="@+id/calibration_img_bg_lady"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="18dp"
         android:alpha="0.5"
@@ -38,8 +38,8 @@
 
     <com.robinhood.spark.SparkView
         android:id="@+id/calibration_plot_sparkView"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
         android:layout_marginTop="16dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
