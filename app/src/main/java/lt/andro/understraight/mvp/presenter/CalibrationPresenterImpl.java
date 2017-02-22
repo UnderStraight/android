@@ -148,26 +148,44 @@ public class CalibrationPresenterImpl implements CalibrationPresenter {
 
     private void startAccelerometer2Module() {
         try {
-            // Route data from adc reads on pin 0
-            gpioModule = mwBoard.getModule(Gpio.class);
-            gpioModule.routeData().fromAnalogIn(GPIO_PIN, Gpio.AnalogReadMode.ADC).stream(GPIO_0_ADC_STREAM)
+            if (getGpioModule() == null) {
+                calibrationView.showToast("Can't read. gpioModule is null");
+                return;
+            }
+            getGpioModule().routeData().fromAnalogIn(GPIO_PIN, Gpio.AnalogReadMode.ADC).stream(GPIO_0_ADC_STREAM)
                     .commit().onComplete(new AsyncOperation.CompletionHandler<RouteManager>() {
                 @Override
                 public void success(RouteManager result) {
-                    result.subscribe(GPIO_0_ADC_STREAM, msg -> {
-                        calibrationView.showToast("Sensor route success");
-                        result.subscribe(ACCELEROMETER_2_DATA_STREAM, message -> showAccelerometer2Value(msg));
-                    });
-                    gpioModule.readAnalogIn(GPIO_PIN, Gpio.AnalogReadMode.ADC);
+                    calibrationView.showToast("Successfully created ADC input route.");
+                    result.subscribe(GPIO_0_ADC_STREAM, msg -> showAccelerometer2Value(msg));
+
+                    continuousReadValue();
                 }
             });
         } catch (UnsupportedModuleException e) {
             e.printStackTrace();
-            calibrationView.showToast("Failed to connect to sensor");
+            calibrationView.showToast("Error initializing board: " + e.getLocalizedMessage());
         }
-
     }
 
+    private void continuousReadValue() {
+        readValue();
+        handler.postDelayed(this::continuousReadValue, Constants.DELAY_READS_MILLIS);
+    }
+
+    private void readValue() {
+        try {
+            getGpioModule().readAnalogIn(GPIO_PIN, Gpio.AnalogReadMode.ADC);
+        } catch (UnsupportedModuleException e) {
+            e.printStackTrace();
+            calibrationView.showToast("Error reading value: " + e.getLocalizedMessage());
+        }
+    }
+
+
+    private Gpio getGpioModule() throws UnsupportedModuleException {
+        return mwBoard.getModule(Gpio.class);
+    }
 
     private void reconnectToUnderStraight(MetaWearBleService.LocalBinder serviceBinder) {
         calibrationView.showProgress(false);
